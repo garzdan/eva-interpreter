@@ -3,20 +3,53 @@ function isNumber(exp) {
 }
 
 function isString(exp) {
-  return typeof exp === 'string' && exp[0] === '"' && exp[exp.length - 1] === '"';
+  return typeof exp === 'string' && exp[0] === '"' && exp.slice(-1) === '"';
 }
 
 module.exports = class EvaInterpreter {
   eval(exp) {
-    //numbers
+    //self-evaluating expressions
+
+    //number
     if (isNumber(exp)) {
       return exp;
     }
 
-    //strings (must be surrounded by double quotes)
+    //string (must be surrounded by double quotes)
     if (isString(exp)) {
       return exp.slice(1, -1);
     }
+
+    //--------------------------
+
+    //math expressions
+
+    //sum
+    if(exp[0] === "+") {
+      return this.eval(exp[1]) + this.eval(exp[2]);
+    }
+
+    //subtraction
+    if(exp[0] === "-") {
+      return this.eval(exp[1]) - this.eval(exp[2]);
+    }
+
+    //multiplication
+    if(exp[0] === "*") {
+      return this.eval(exp[1]) * this.eval(exp[2]);
+    }
+
+    //division
+    if(exp[0] === "/") {
+      return this.eval(exp[1]) / this.eval(exp[2]);
+    }
+
+    //module
+    if(exp[0] === "%") {
+      return this.eval(exp[1]) % this.eval(exp[2]);
+    }
+
+    //--------------------------
 
     throw 'Unimplemented';
   }
