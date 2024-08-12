@@ -1,0 +1,42 @@
+//Lexical grammar (Tokens):
+
+%lex
+
+%%
+
+\s+                 /* skip whitespaces */
+
+\"[^\"]*\"          return 'STRING'
+
+[+-]?\d+(\.\d+)?    return 'NUMBER'
+
+[\w\-+*=<>%/]+      return 'SYMBOL'
+
+/lex
+
+//--------------------------------------
+//Syntactic grammar (BNF):
+
+%%
+
+Exp
+  : Atom
+  | List
+  ;
+
+Atom
+  : NUMBER { $$ = Number($1) }
+  | STRING
+  | SYMBOL
+  ;
+
+List
+  : '(' ListEntries ')' { $$ = $2 }
+  ;
+
+ListEntries
+  : ListEntries Exp { $1.push($2); $$ = $1 }
+  | /* empty */ { $$ = [] }
+  ;
+
+//--------------------------------------
