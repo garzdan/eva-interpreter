@@ -1,4 +1,4 @@
-# EVA-interpreter
+# EVA Interpreter
 
 A JavaScript interpreter for the EVA programming language 
 (based on the [Dmitry Soshnikov course _Essentials of interpretation_](https://dmitrysoshnikov.teachable.com/courses/enrolled/795712)).
@@ -89,7 +89,185 @@ operation.
 with both class-based and prototype-based models.
 
 ## EVA expressions
-//todo
+
+### Self-evaluating expressions
+
+Self-evaluating expressions in EVA include Numbers and Strings, which return directly their value without further evaluation:
+
+- Numbers include signed and unsigned `integers` and `floats` (in both standard and exponential notation), `NaN` and `Infinity`
+> Example
+> ```
+> (5)           //5
+> (-4)          //-4 
+> (7.4)         //7.4
+> (-3.2)        //-3.2
+> (NaN)         //NaN
+> (Infinity)    //Infinity
+> (1.23e5)      //1.23e5 
+>```
+
+- Strings are any characters combination passed in double quotes
+> Example
+> ```
+> ("foo")           //foo
+> ("bar")           //bar
+> ("hello world!")  //hello world!
+>```
+
+
+### Math expressions
+
+The math operations supported by EVA are the following:
+
+- Sum 
+- Subtraction
+- Multiplication
+- Division
+- Module
+
+For each operator, arguments can be Numbers, Strings or other math expressions (evaluated recursively). Math expression 
+return the result of the operation as value.
+
+> Example
+> ```
+> (+ 3 5)             //8
+> (- 7.5 4.3)         //3.2
+> (* 3 3)             //9
+> (/ 6 3)             //2
+> (% 5 2)             //1
+> (- (+ 3 7) (* 4 2)) //2
+>```
+
+### Comparison expressions
+
+The comparison operators supported by EVA are the following:
+- grater (>)
+- greater or equal (>=)
+- lesser (<)
+- lesser or equal (<=)
+- equal (=)
+
+> Example
+> ```
+> (> 3 5)       //true
+> (>= 5 5)      //true
+> (< 0 10)      //true
+> (<= 3 3)      //true
+> (= 15 15)     //true
+> ```
+
+### Variable expressions
+
+The variable expressions supported by EVA are the following:
+
+- Variable declaration: declares a variable in current scope. The expression returns the value of the declared variable.
+
+> Example
+> ```
+> (var foo 10)  //10
+>```
+
+- Variable assignment: assigns a value to a variable already existing in the environment (scope) chain.
+The expression returns the value assigned to the variable, or an error if the variable does not exist.
+
+> Example
+> ```
+> (set foo 20)  //20
+>```
+
+- Variable lookup: lookup a variable value by traversing the environments (scope) chain to resolve the variable
+identifier. The expression returns tha value of the variable, or an error if the variable is not defined.
+
+> Example
+> ```
+> (set foo 20)
+> foo  //20
+>```
+
+
+### Block expressions
+
+The `begin` expression allows you to create a new block of expressions with its own scope.
+**In order to implement the new **block scope**, on block enter a new environment for the block is created.**
+
+> Example
+> 
+> ```
+> (var x 10)
+> (print x)     //10
+> 
+> (begin
+>   (var x 20)
+>   (print x)   //20 (variable shadowing)
+> )
+> 
+> (print x)     //10
+> ```
+
+### Conditional expressions
+
+EVA supports the `if` conditional operator with the following syntax
+
+`(if <condition> <consequent> <alternate>)`
+
+> Example
+> 
+> ```
+> (var x 10)
+> (if (x > 5) 
+>   (begin
+>     (set x 3)
+>     x
+>   )
+>   (begin
+>     (set x 14)
+>     x 
+>   )
+> )
+> ```
+
+
+### Cycle expressions
+
+The cycle expressions supported by EVA are the following:
+
+- `while` loop, with the following syntax
+`(while <condition> <block>)`
+
+> Example
+> 
+> ```
+> (var x 0)
+> (while (x < 5) (begin
+>   (set x (+ x 1))
+>   x
+> ))
+> ```
+
+
+## Environments
+
+An environment is a storage structure used to implement scopes, which acts as a repository of all variables and
+functions defined in a scope. Every programming language has at least a global environment, an environment
+which exists prior to code execution and contains some global declarations.
+
+Typically, the environment structure consists of two parts:
+- **Environment Record**: it's the actual storage, usually just a key/value map from variable name to its value.
+- **Reference to Parent Environment** (optional): environments may inherit other environments. For example, the local
+scope of a function may access variables defined in its outer scope. To do so, the function environment needs to keep a
+reference to its outer scope environment.
+
+The EVA's Environment interface defines three main operations:
+- **Storing of a variable in the Environment Record** (used to implement variable declaration)
+- **Lookup of the value of a variable stored in the Environment Record** (used to implement variable lookup)
+- 
+
+Eva Interpreter's environment expects a variable name to start with a letter followed by alphanumeric characters or the
+_ symbol. Its global environment defines out of the box the following variables:
+- `null`
+- `true`
+- `false`
+- `version`
 
 ## AST format
 
