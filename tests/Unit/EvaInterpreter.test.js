@@ -223,3 +223,59 @@ test('while expression returns the result of its last iteration', () => {
 });
 
 //-------------------
+//function expressions
+test('calling a user-defined function with parameters returns the expected result', () => {
+  expect(_interpret(`
+    (begin
+      (def square (x)
+        (* x x)
+      )
+      
+      (square 2)
+    )
+  `)).toBe(4)
+});
+
+test('functions have a static scope', () => {
+  expect(_interpret(`
+    (begin
+      (var x 8)
+      
+      (def foo (y)
+        (begin
+          (var result (* x y))
+          result
+        )
+      )
+      
+      (begin
+        (var x 20)
+        (foo 2)
+      )        
+    )
+  `)).toBe(16)
+});
+
+test(' functions are closures', () => {
+  expect(_interpret(`
+    (begin
+      (var x 15)    
+      (var y 13)
+      (def calc (a b)
+        (begin
+          (var z (+ a b))
+          (def inner (c)
+            (+ (+ (+ x y) z) c)
+          )
+          inner
+        )
+      )
+      
+      (begin
+        (var fn (calc 7 4))
+        (fn 1)
+      )        
+    )
+  `)).toBe(40);
+});
+//-------------------

@@ -42,7 +42,7 @@ const GLOBAL_ENV = new Environment({
     return op1 <= op2;
   },
   //-------------------------
-  //utils:
+  //native functions:
   print(output) {
     console.log(output);
   }
@@ -85,7 +85,7 @@ module.exports = class EvaInterpreter {
     if (exp[0] === 'var') {
       const [_, name, value] = exp;
 
-      return env.define(name, this.eval(value));
+      return env.define(name, this.eval(value, env));
     }
 
     //assignment
@@ -111,7 +111,7 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
-    // cycle expressions
+    // cycle expressions:
 
     //while
     if (exp[0] === 'while') {
@@ -126,9 +126,23 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
-    // function expressions
+    // function expressions:
+
+    //declaration
+    if (exp[0] === 'def') {
+      const [_tag, name, params, body] = exp;
+      const fn = {
+        params,
+        body,
+        env, //closure: captures the reference to the environment in which the function is defined
+      };
+
+      return env.define(name, fn);
+    }
+
+    //execution
     if (Array.isArray(exp)) {
-      const fn = this.eval(exp[0]);
+      const fn = this.eval(exp[0], env);
       const args = exp.slice(1).map((arg) => this.eval(arg, env));
 
       //built-in functions
@@ -137,9 +151,19 @@ module.exports = class EvaInterpreter {
       }
 
       //user-defined functions
-      //todo
-    }
 
+      //create a new environment (a.k.a. activation environment)
+      const activationRecord = {};
+
+      fn.params.forEach((param, index) => {
+        activationRecord[param] = args[index];
+      });
+
+      const activationEnv = new Environment(activationRecord, fn.env); //set the parent environment to the environment in which the function as been declared (static scope)
+      // const activationEnv = new Environment(activationRecord, env); //set the parent environment to the environment in which the function as been called (dynamic scope)
+
+      return this._evalBody(fn.body, activationEnv);
+    }
 
     //--------------------------
 
@@ -169,6 +193,14 @@ module.exports = class EvaInterpreter {
     });
 
     return result;
+  }
+
+  _evalBody(body, env) {
+    if (body[0] === 'begin') {
+      return this._evalBlock(body, env);
+    }
+
+    return this.eval(body, env);
   }
 }
 
