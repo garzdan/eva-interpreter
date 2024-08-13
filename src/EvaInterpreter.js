@@ -1,24 +1,53 @@
 const Environment = require("./Environment");
 
+//default global environment
 const GLOBAL_ENV = new Environment({
+  //global variables
   null: null,
   true: true,
   false: false,
   version: '0.1',
+  //-------------------------
+  //math operators:
+  '+'(op1, op2) {
+    return op1 + op2;
+  },
+  '-'(op1, op2 = null) {
+    return op2 === null ? -op1 : op1 - op2;
+  },
+  '*'(op1, op2) {
+    return op1 * op2;
+  },
+  '/'(op1, op2) {
+    return op1 / op2;
+  },
+  '%'(op1, op2) {
+    return op1 % op2
+  },
+  //-------------------------
+  //comparison operators:
+  '='(op1, op2) {
+    return op1 === op2;
+  },
+  '>'(op1, op2) {
+    return op1 > op2;
+  },
+  '>='(op1, op2){
+    return op1 >= op2;
+  },
+  '<'(op1, op2) {
+    return op1 < op2;
+  },
+  '<='(op1, op2) {
+    return op1 <= op2;
+  },
+  //-------------------------
+  //utils:
+  print(output) {
+    console.log(output);
+  }
+  //
 });
-
-function isNumber(exp) {
-  return typeof exp === 'number';
-}
-
-function isString(exp) {
-  return typeof exp === 'string' && exp[0] === '"' && exp.slice(-1) === '"';
-}
-
-//variable names must be strings, starting with a letter and containing only alphanumeric characters plus the underscore symbol
-function isVariableName(exp) {
-  return typeof exp === 'string' && /^[a-zA-Z][a-zA-Z0-9_]*$/.test(exp);
-}
 
 module.exports = class EvaInterpreter {
   //creates an Eva interpreter instance with the global environment
@@ -30,75 +59,16 @@ module.exports = class EvaInterpreter {
     //self-evaluating expressions:
 
     //number
-    if (isNumber(exp)) {
+    if (this._isNumber(exp)) {
       return exp;
     }
 
     //string (must be surrounded by double quotes)
-    if (isString(exp)) {
+    if (this._isString(exp)) {
       return exp.slice(1, -1);
     }
 
     //--------------------------
-
-    //math expressions:
-
-    //sum
-    if (exp[0] === "+") {
-      return this.eval(exp[1], env) + this.eval(exp[2], env);
-    }
-
-    //subtraction
-    if (exp[0] === "-") {
-      return this.eval(exp[1], env) - this.eval(exp[2], env);
-    }
-
-    //multiplication
-    if (exp[0] === "*") {
-      return this.eval(exp[1], env) * this.eval(exp[2], env);
-    }
-
-    //division
-    if (exp[0] === "/") {
-      return this.eval(exp[1], env) / this.eval(exp[2], env);
-    }
-
-    //module
-    if (exp[0] === "%") {
-      return this.eval(exp[1], env) % this.eval(exp[2], env);
-    }
-
-    //--------------------------
-
-    //comparison expressions:
-
-    //greater
-    if (exp[0] === '>') {
-      return this.eval(exp[1], env) > this.eval(exp[2], env);
-    }
-
-    //greater or equal
-    if (exp[0] === '>=') {
-      return this.eval(exp[1], env) >= this.eval(exp[2], env);
-    }
-
-    //lesser
-    if (exp[0] === '<') {
-      return this.eval(exp[1], env) < this.eval(exp[2], env);
-    }
-
-    //lesser or equal
-    if (exp[0] === '<=') {
-      return this.eval(exp[1], env) <= this.eval(exp[2], env);
-    }
-
-    //equal
-    if (exp[0] === '=') {
-      return this.eval(exp[1], env) === this.eval(exp[2], env);
-    }
-
-    //--------------------------
-
     // block expression:
 
     //begin
@@ -109,7 +79,6 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
-
     //variable expressions:
 
     //declaration
@@ -127,12 +96,11 @@ module.exports = class EvaInterpreter {
     }
 
     //lookup
-    if (isVariableName(exp)) {
+    if (this._isVariableName(exp)) {
       return env.lookup(exp);
     }
 
     //--------------------------
-
     //conditional expressions:
 
     //if
@@ -143,7 +111,6 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
-
     // cycle expressions
 
     //while
@@ -159,9 +126,37 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
+    // function expressions
+    if (Array.isArray(exp)) {
+      const fn = this.eval(exp[0]);
+      const args = exp.slice(1).map((arg) => this.eval(arg, env));
 
+      //built-in functions
+      if (typeof fn === 'function') {
+        return fn(...args);
+      }
+
+      //user-defined functions
+      //todo
+    }
+
+
+    //--------------------------
 
     throw `Unimplemented expression: ${JSON.stringify(exp)}`;
+  }
+
+  _isNumber(exp) {
+    return typeof exp === 'number';
+  }
+
+  //variable names must be strings, starting with a letter and containing only alphanumeric characters plus the underscore symbol
+  _isVariableName(exp) {
+    return typeof exp === 'string' && /^[+\-*%/<>=a-zA-Z0-9_]*$/.test(exp);
+  }
+
+  _isString(exp) {
+    return typeof exp === 'string' && exp[0] === '"' && exp.slice(-1) === '"';
   }
 
   _evalBlock(block, env) {

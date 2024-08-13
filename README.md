@@ -128,6 +128,11 @@ The math operations supported by EVA are the following:
 For each operator, arguments can be Numbers, Strings or other math expressions (evaluated recursively). Math expression 
 return the result of the operation as value.
 
+> Note
+> 
+> To increase the performances of these heavily used operators, they are implemented in the global scope as built-in 
+> native JavaScript functions in the EVA interpreter.
+
 > Example
 > ```
 > (+ 3 5)             //8
@@ -146,6 +151,11 @@ The comparison operators supported by EVA are the following:
 - lesser (<)
 - lesser or equal (<=)
 - equal (=)
+
+> Note
+>
+> To increase the performances of these heavily used operators, they are implemented in the global scope as built-in
+> native JavaScript functions in the EVA interpreter.
 
 > Example
 > ```
