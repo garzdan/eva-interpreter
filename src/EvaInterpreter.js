@@ -128,16 +128,27 @@ module.exports = class EvaInterpreter {
     //--------------------------
     // function expressions:
 
-    //declaration
+    /**
+     * declaration
+     * (def x (y) (* 2 y))
+     * [syntactic sugar for (var x (lambda (y) (* 2 y)))]
+     */
+
     if (exp[0] === 'def') {
       const [_tag, name, params, body] = exp;
-      const fn = {
+
+      return this.eval(['var', name, ['lambda', params, body]], env);
+    }
+
+    //lambda function
+    if (exp[0] === 'lambda') {
+      const [_tag, params, body] = exp;
+
+      return {
         params,
         body,
         env, //closure: captures the reference to the environment in which the function is defined
-      };
-
-      return env.define(name, fn);
+      }
     }
 
     //execution

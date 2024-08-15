@@ -278,4 +278,44 @@ test(' functions are closures', () => {
     )
   `)).toBe(40);
 });
+
+test('lambda functions can be passed as argument to other functions', () => {
+  expect(_interpret(`
+    (begin
+      (var x 10)
+      (var y 20)
+      
+      (def foo (callback)
+        (callback x y)
+      )
+      
+      (foo (lambda (a b)
+        (* a b)
+      ))
+    )
+  `)).toBe(200);
+});
+
+test('lamba functions can be immediately invoked (IILE)', () => {
+  expect(_interpret(`
+    (begin
+      ((lambda (x) (* x 20)) 2)
+    )
+  `)).toBe(40);
+})
+
+test ('recursive function calls are supported', () => {
+  expect(_interpret(`
+    (begin
+      (def factorial (x)
+        (if (= 1 x)
+          1
+          (* x (factorial (- x 1)))
+        )
+      )
+      
+      (factorial 5)  
+    )
+  `)).toBe(120)
+})
 //-------------------
