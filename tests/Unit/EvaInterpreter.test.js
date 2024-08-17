@@ -1,4 +1,4 @@
-const evaParser = require('../util/parser/evaParser');
+const evaParser = require('../../src/parser/evaParser');
 const EvaInterpreter = require('../../src/EvaInterpreter');
 const evaInterpreter = new EvaInterpreter();
 
@@ -202,11 +202,22 @@ test('if expression executes alternate if condition is false', () => {
   expect(_interpret(`(if (< 3 2) "consequent" "alternate")`)).toBe('alternate');
 });
 
+test('switch expression executes the right case if condition is met', () => {
+  expect(_interpret(`
+    (begin
+      (var x 10)
+      (switch ((= x 5) 100)
+              ((> x 5) 200)
+              (else 300)
+      )
+    )
+  `)).toBe(200)
+})
 //-------------------
 
 //cycle expressions:
 
-test('while expression returns the result of its last iteration', () => {
+test('while loop returns the result of its last iteration', () => {
   expect(_interpret(`
     (begin
       (var counter 0)
@@ -222,6 +233,34 @@ test('while expression returns the result of its last iteration', () => {
   `)).toBe(32);
 });
 
+test('for loop returns the result of its last iteration', () => {
+  expect(_interpret(`
+    (begin
+      (var result 1)
+      (for (var counter 0) (< counter 5) (++ counter) (set result (+ result result)))
+      result
+    )
+  `)).toBe(32);
+})
+//-------------------
+//increment/decrement expressions
+test('increment expression increase variable value by 1', () => {
+  expect(_interpret(`
+    (begin
+      (var x 10)
+      (++ x)
+    )
+  `)).toBe(11);
+});
+
+test('decrement expression decrease variable value by 1', () => {
+  expect(_interpret(`
+    (begin
+      (var x 10)
+      (-- x)
+    )
+  `)).toBe(9);
+});
 //-------------------
 //function expressions
 test('calling a user-defined function with parameters returns the expected result', () => {
@@ -304,7 +343,7 @@ test('lamba functions can be immediately invoked (IILE)', () => {
   `)).toBe(40);
 })
 
-test ('recursive function calls are supported', () => {
+test ('functions can be called recursively', () => {
   expect(_interpret(`
     (begin
       (def factorial (x)

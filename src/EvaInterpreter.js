@@ -1,4 +1,6 @@
 const Environment = require("./Environment");
+const ExecutionStack = require("./ExecutionStack");
+const Transformer = require('./transformer/Transformer');
 
 //default global environment
 const GLOBAL_ENV = new Environment({
@@ -51,11 +53,19 @@ const GLOBAL_ENV = new Environment({
 
 module.exports = class EvaInterpreter {
   //creates an Eva interpreter instance with the global environment
-  constructor(globalEnv = GLOBAL_ENV) {
-    this.globalEnv = globalEnv;
+  constructor(
+    globalEnv = GLOBAL_ENV,
+    transformer = new Transformer(),
+    executionStack = new ExecutionStack(),
+  ) {
+    this._globalEnv = globalEnv;
+    this._transformer = transformer;
+    this._executionStack = executionStack;
+
+    this._executionStack.push('global', this._globalEnv);
   }
 
-  eval(exp, env = this.globalEnv) {
+  eval(exp, env = this._globalEnv) {
     //self-evaluating expressions:
 
     //number
@@ -110,6 +120,13 @@ module.exports = class EvaInterpreter {
       return this.eval(condition, env) ? this.eval(consequent, env) : this.eval(alternate, env);
     }
 
+    //switch
+    if (exp[0] === 'switch') {
+      const ifExp = this._transformer.transformSwitchToIf(exp);
+
+      return this.eval(ifExp, env);
+    }
+
     //--------------------------
     // cycle expressions:
 
@@ -125,19 +142,40 @@ module.exports = class EvaInterpreter {
       return result;
     }
 
+    //for
+    if (exp[0] === 'for') {
+      const whileExp = this._transformer.transformForToWhile(exp);
+
+      return this.eval(whileExp, env);
+    }
+
+    // increment/decrement expressions:
+
+    //increment
+    if (exp[0] === '++') {
+      const setExp = this._transformer.transformIncToSet(exp);
+
+      return this.eval(setExp, env);
+    }
+
+    //decrement
+    if (exp[0] === '--') {
+      const setExp = this._transformer.transformDecToSet(exp);
+
+      return this.eval(setExp, env);
+    }
     //--------------------------
+
     // function expressions:
 
     /**
      * declaration
      * (def x (y) (* 2 y))
-     * [syntactic sugar for (var x (lambda (y) (* 2 y)))]
+     * [syntactic sugar for `(var x (lambda (y) (* 2 y)))`]
      */
 
     if (exp[0] === 'def') {
-      const [_tag, name, params, body] = exp;
-
-      return this.eval(['var', name, ['lambda', params, body]], env);
+      return this.eval(this._transformer.transformDefToLambda(exp), env);
     }
 
     //lambda function
@@ -171,9 +209,15 @@ module.exports = class EvaInterpreter {
       });
 
       const activationEnv = new Environment(activationRecord, fn.env); //set the parent environment to the environment in which the function as been declared (static scope)
-      // const activationEnv = new Environment(activationRecord, env); //set the parent environment to the environment in which the function as been called (dynamic scope)
+      //const activationEnv = new Environment(activationRecord, env); //set the parent environment to the environment in which the function as been called (dynamic scope)
 
-      return this._evalBody(fn.body, activationEnv);
+      this._executionStack.push(exp[0], activationEnv);
+
+      const result = this._evalBody(fn.body, activationEnv);
+
+      this._executionStack.pop();
+
+      return result;
     }
 
     //--------------------------
@@ -214,5 +258,3 @@ module.exports = class EvaInterpreter {
     return this.eval(body, env);
   }
 }
-
-//self-evaluating expression: expression that are returned right away, without further processing by the interpreter
