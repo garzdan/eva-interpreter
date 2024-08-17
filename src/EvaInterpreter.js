@@ -110,6 +110,20 @@ module.exports = class EvaInterpreter {
       return env.lookup(exp);
     }
 
+    //increment
+    if (exp[0] === '++') {
+      const setExp = this._transformer.transformIncToSet(exp);
+
+      return this.eval(setExp, env);
+    }
+
+    //decrement
+    if (exp[0] === '--') {
+      const setExp = this._transformer.transformDecToSet(exp);
+
+      return this.eval(setExp, env);
+    }
+
     //--------------------------
     //conditional expressions:
 
@@ -148,23 +162,6 @@ module.exports = class EvaInterpreter {
 
       return this.eval(whileExp, env);
     }
-
-    // increment/decrement expressions:
-
-    //increment
-    if (exp[0] === '++') {
-      const setExp = this._transformer.transformIncToSet(exp);
-
-      return this.eval(setExp, env);
-    }
-
-    //decrement
-    if (exp[0] === '--') {
-      const setExp = this._transformer.transformDecToSet(exp);
-
-      return this.eval(setExp, env);
-    }
-    //--------------------------
 
     // function expressions:
 

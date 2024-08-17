@@ -194,6 +194,27 @@ identifier. The expression returns tha value of the variable, or an error if the
 > foo  //20
 >```
 
+- `++` operator: increase by 1 the current variable's value
+
+> Example
+> 
+> ```
+> (var i 0)
+> (print i) //0
+> (++ i)
+> (print i) //1 
+> ```
+
+- `--` operator: decrease by 1 the current variable's value
+
+> Example
+>
+> ```
+> (var i 5)
+> (print i) //5
+> (-- i)
+> (print i) //4 
+>
 
 ### Block expressions
 
@@ -216,7 +237,9 @@ The `begin` expression allows you to create a new block of expressions with its 
 
 ### Conditional expressions
 
-EVA supports the `if` conditional operator with the following syntax
+The conditional expressions supported by EVA are the following:
+
+- `if` operator, with syntax
 
 `(if <condition> <consequent> <alternate>)`
 
@@ -236,12 +259,25 @@ EVA supports the `if` conditional operator with the following syntax
 > )
 > ```
 
+- `switch`operator, with syntax
+
+`(switch (<case1> <block1>) (<case2> <block2>) ... (else <blockn>))`
+
+> Example
+> 
+> ```
+> (switch
+>   ((x > 5) (print "foo"))
+>   ((x = 5) (print "bar"))
+>   (else (print "end")
+> )
+> ```
 
 ### Cycle expressions
 
 The cycle expressions supported by EVA are the following:
 
-- `while` loop, with the following syntax
+- `while` loop, with syntax
 `(while <condition> <block>)`
 
 > Example
@@ -254,6 +290,58 @@ The cycle expressions supported by EVA are the following:
 > ))
 > ```
 
+- `for` loop, with syntax
+
+`(for <init> <condition> <modifier> <body>)`
+
+> Example
+> 
+> ```
+> (for (var i 0) (< i 10) (++ i)
+>   (print i)
+> ) 
+> ```
+
+### Function expressions
+
+In EVA all function are closures, meaning that all functions store a reference to the scope in which they were defined,
+and therefore they can access all the variable defined in that scope chain (static scope).
+
+The function expressions supported by EVA are the following:
+
+- Function declaration: is it possible to declare a function using the `def` expression with syntax
+`(def <name> <params> <body>)`
+
+> Example
+> ```
+> (def sum (x, y) (+, x, y))
+> ```
+
+- Function call: is it possible to call a function by its name with syntax
+`(name <param1> <param2> ... <paramn>)`
+
+> Example
+> 
+> ```
+> (sum 1 2) //3
+> ```
+
+- Lambda function: it is possible to define an anonymous function using the `lambda` expression with syntax
+`(lambda <params> <body>)`
+
+> Example
+> ```
+> (var sum (lambda (x, y) (+, x, y)))
+> (sum 3 5) //8
+> ```
+
+- Immediately-Invoked Lambda Expression (IILE): it is possible to immediately invoked a lambda function with syntax
+`( (lambda <params> <body>) <param1> <param2> ... <paramn>)`
+
+> Example
+> ```
+> ((lambda (x, y) (+, x, y)) 3 7) //10
+> ```
 
 ## Environments
 
