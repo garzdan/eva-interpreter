@@ -1,5 +1,6 @@
 const evaParser = require('../../src/parser/evaParser');
 const EvaInterpreter = require('../../src/EvaInterpreter');
+const Environment = require("../../src/Environment");
 const evaInterpreter = new EvaInterpreter();
 
 function _interpret(code) {
@@ -190,6 +191,24 @@ test('variable lookup throws if the variable is not defined', () => {
   expect(() => _interpret(`z`)).toThrow('Variable z is not defined.');
 });
 
+test('increment expression increase variable value by 1', () => {
+  expect(_interpret(`
+    (begin
+      (var x 10)
+      (++ x)
+    )
+  `)).toBe(11);
+});
+
+test('decrement expression decrease variable value by 1', () => {
+  expect(_interpret(`
+    (begin
+      (var x 10)
+      (-- x)
+    )
+  `)).toBe(9);
+});
+
 //-------------------
 
 //conditional expressions:
@@ -242,25 +261,6 @@ test('for loop returns the result of its last iteration', () => {
     )
   `)).toBe(32);
 })
-//-------------------
-//increment/decrement expressions
-test('increment expression increase variable value by 1', () => {
-  expect(_interpret(`
-    (begin
-      (var x 10)
-      (++ x)
-    )
-  `)).toBe(11);
-});
-
-test('decrement expression decrease variable value by 1', () => {
-  expect(_interpret(`
-    (begin
-      (var x 10)
-      (-- x)
-    )
-  `)).toBe(9);
-});
 //-------------------
 //function expressions
 test('calling a user-defined function with parameters returns the expected result', () => {
@@ -357,4 +357,70 @@ test ('functions can be called recursively', () => {
     )
   `)).toBe(120)
 })
+//-------------------
+// class expressions
+test('classes create a new environment at declaration', () => {
+  expect(_interpret(`
+    (begin 
+      (class Calculator null (def sum (x y) (+ x y)))      
+    )
+  `)).toBeInstanceOf(Environment);
+});
+
+test('classes can be instantiated', () => {
+  expect(_interpret(`
+    (begin
+      (class Calculator null 
+        (begin
+          (def constructor (this x y)
+            (begin
+              (set (prop this x) x)
+              (set (prop this y) y)
+            )
+          )
+          (def sum (this)
+            (+ (prop this x) (prop this y))
+          )
+        )
+      )
+      (var calculator (new Calculator 10 20))
+      ((prop calculator sum) calculator)  
+    )
+  `)).toBe(30);
+});
+
+test('classes can inherit from super classes', () => {
+  expect(_interpret(`
+    (begin
+      (class Point null
+        (begin
+          (def constructor (this x y)
+            (begin
+              (set (prop this x) x)
+              (set (prop this y) y)
+            )
+          )
+          (def calc (this)
+            (+ (prop this x) (prop this y))
+          )
+        )
+      )
+      (class Point3D Point
+        (begin
+          (def constructor (this x y z)
+            (begin
+              ((prop (super Point3D) constructor) this x y)
+              (set (prop this z) z)
+            )
+          )
+          (def calc (this)
+            (+ ((prop (super Point3D) calc) this) (prop this z))
+          )
+        )
+      )
+      (var p3d (new Point3D 1 2 3))
+      ((prop p3d calc) p3d)
+    )
+  `)).toBe(6);
+});
 //-------------------

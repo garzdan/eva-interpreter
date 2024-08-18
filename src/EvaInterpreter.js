@@ -100,9 +100,18 @@ module.exports = class EvaInterpreter {
 
     //assignment
     if (exp[0] === 'set') {
-      const [_, name, value] = exp;
+      const [_, ref, value] = exp;
 
-      return env.assign(name, this.eval(value, env));
+      //assignment to a property
+      if (ref[0] === 'prop') {
+        const [_tag, instance, propName] = ref;
+        const instanceEnv = this.eval(instance, env);
+
+        return instanceEnv.define(propName, this.eval(value, env)); //define always creates the variable in the environment in which is called, without searching in the environment chain for already existing definitions to update
+      }
+
+      //simple assignment
+      return env.assign(ref, this.eval(value, env));
     }
 
     //lookup
@@ -142,7 +151,7 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
-    // cycle expressions:
+    //cycle expressions:
 
     //while
     if (exp[0] === 'while') {
@@ -163,7 +172,56 @@ module.exports = class EvaInterpreter {
       return this.eval(whileExp, env);
     }
 
-    // function expressions:
+    //class expressions:
+
+    //declaration (class <name> <parent> <body>)
+    if (exp[0] === 'class') {
+      const [_tag, name, parent, body] = exp;
+      const parentEnv = this.eval(parent, env) || env;
+      const classEnv = new Environment({}, parentEnv);
+
+      this._evalBody(body, classEnv);
+
+      return env.define(name, classEnv);
+    }
+
+    //instantiation (new <name> <args>)
+    if (exp[0] === 'new') {
+      /**
+       * an instance of a class is a new environment, in which the parent component is set to the class environment.
+       */
+      const classEnv = this.eval(exp[1], env);
+      const instanceEnv = new Environment({}, classEnv);
+
+      const args = exp.slice(2).map(arg => this.eval(arg, env));
+
+      this._callUserDefinedFunction(
+        `${exp[1]} constructor`,
+        (classEnv.lookup('constructor')),
+        [instanceEnv, ...args]
+      );
+
+      return instanceEnv;
+    }
+
+    //property access (prop <instance> <name>)
+    if (exp[0] === 'prop') {
+      const [_tag, instance, name] = exp;
+
+      const instanceEnv = this.eval(instance, env);
+
+      return instanceEnv.lookup(name);
+    }
+
+    //super (super <ClassName>)
+    if (exp[0] === 'super') {
+      const [_tag, className] = exp;
+      return this.eval(className, env).parent;
+    }
+
+    //--------------------------
+
+    //function expressions:
 
     /**
      * declaration
@@ -197,24 +255,7 @@ module.exports = class EvaInterpreter {
       }
 
       //user-defined functions
-
-      //create a new environment (a.k.a. activation environment)
-      const activationRecord = {};
-
-      fn.params.forEach((param, index) => {
-        activationRecord[param] = args[index];
-      });
-
-      const activationEnv = new Environment(activationRecord, fn.env); //set the parent environment to the environment in which the function as been declared (static scope)
-      //const activationEnv = new Environment(activationRecord, env); //set the parent environment to the environment in which the function as been called (dynamic scope)
-
-      this._executionStack.push(exp[0], activationEnv);
-
-      const result = this._evalBody(fn.body, activationEnv);
-
-      this._executionStack.pop();
-
-      return result;
+      return this._callUserDefinedFunction(exp[0], fn, args);
     }
 
     //--------------------------
@@ -253,5 +294,25 @@ module.exports = class EvaInterpreter {
     }
 
     return this.eval(body, env);
+  }
+
+  _callUserDefinedFunction(name, fn, args) {
+    //create a new environment (a.k.a. activation environment)
+    const activationRecord = {};
+
+    fn.params.forEach((param, index) => {
+      activationRecord[param] = args[index];
+    });
+
+    const activationEnv = new Environment(activationRecord, fn.env); //set the parent environment to the environment in which the function as been declared (static scope)
+    //const activationEnv = new Environment(activationRecord, env); //set the parent environment to the environment in which the function as been called (dynamic scope)
+
+    this._executionStack.push(name, activationEnv);
+
+    const result = this._evalBody(fn.body, activationEnv);
+
+    this._executionStack.pop();
+
+    return result;
   }
 }

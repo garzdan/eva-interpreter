@@ -314,7 +314,7 @@ The function expressions supported by EVA are the following:
 
 > Example
 > ```
-> (def sum (x, y) (+, x, y))
+> (def sum (x y) (+ x y))
 > ```
 
 - Function call: is it possible to call a function by its name with syntax
@@ -331,7 +331,7 @@ The function expressions supported by EVA are the following:
 
 > Example
 > ```
-> (var sum (lambda (x, y) (+, x, y)))
+> (var sum (lambda (x y) (+ x y)))
 > (sum 3 5) //8
 > ```
 
@@ -340,7 +340,7 @@ The function expressions supported by EVA are the following:
 
 > Example
 > ```
-> ((lambda (x, y) (+, x, y)) 3 7) //10
+> ((lambda (x y) (+ x y)) 3 7) //10
 > ```
 
 ## Environments
