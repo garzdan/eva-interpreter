@@ -1,0 +1,21 @@
+(def sayHelloTo (name)
+    (begin
+        (print "Hello" name)
+    )
+)
+
+(class Person null
+    (begin
+        (def constructor (this name)
+            (set (prop this name) name)
+        )
+
+        (def getName (this)
+            (prop this name)
+        )
+    )
+)
+
+(var person (new Person "John Doe"))
+
+(sayHelloTo ((prop person getName) person))

@@ -47,8 +47,8 @@ const GLOBAL_ENV = new Environment({
   },
   //-------------------------
   //native functions:
-  print(output) {
-    console.log(output);
+  print(...strings) {
+    console.log(...strings);
   }
   //
 });

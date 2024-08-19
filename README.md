@@ -119,19 +119,19 @@ Self-evaluating expressions in EVA include Numbers and Strings, which return dir
 
 The math operations supported by EVA are the following:
 
-- Sum 
-- Subtraction
-- Multiplication
-- Division
-- Module
+- Sum: `(+ <op1> op2>)`
+- Subtraction: `(- <op1> <op2)`
+- Multiplication: `(* <op1> <op2>)`
+- Division: `(/ <op1> <op2>)`
+- Module: `(% <op1> <op2>)`
 
 For each operator, arguments can be Numbers, Strings or other math expressions (evaluated recursively). Math expression 
 return the result of the operation as value.
 
 > Note
 > 
-> To increase the performances of these heavily used operators, they are implemented in the global scope as built-in 
-> native JavaScript functions in the EVA interpreter.
+> To increase the performances of these heavily used operators, the EVa interpreter implment them in global scope 
+> as built-in native JavaScript functions.
 
 > Example
 > ```
@@ -146,11 +146,11 @@ return the result of the operation as value.
 ### Comparison expressions
 
 The comparison operators supported by EVA are the following:
-- grater (>)
-- greater or equal (>=)
-- lesser (<)
-- lesser or equal (<=)
-- equal (=)
+- grater: `(> <op1> <op2>)`
+- greater or equal: `(>= <op1> <op2>)`
+- lesser: `(< <op1> <op2>)`
+- lesser or equal: `(<= <op1> <op2>)`
+- equal: `(= <op1> <op2>)`
 
 > Note
 >
@@ -170,23 +170,29 @@ The comparison operators supported by EVA are the following:
 
 The variable expressions supported by EVA are the following:
 
-- Variable declaration: declares a variable in current scope. The expression returns the value of the declared variable.
+- declaration: `(var <name> <value>)`
+
+declares a variable in current scope. The expression returns the value of the declared variable.
 
 > Example
 > ```
 > (var foo 10)  //10
 >```
 
-- Variable assignment: assigns a value to a variable already existing in the environment (scope) chain.
-The expression returns the value assigned to the variable, or an error if the variable does not exist.
+- assignment: `(set <name> <value>)` 
+
+assigns a value to a variable already defined in the environment (scope) chain.
+The expression returns the new value assigned to the variable, or an error if the variable does not exist.
 
 > Example
 > ```
 > (set foo 20)  //20
 >```
 
-- Variable lookup: lookup a variable value by traversing the environments (scope) chain to resolve the variable
-identifier. The expression returns tha value of the variable, or an error if the variable is not defined.
+- look-up: `(<name>)`
+
+look-up a variable value by traversing the environments (scope) chain to resolve its identifier.
+The expression returns tha value of the variable, or an error if the variable is not defined.
 
 > Example
 > ```
@@ -194,7 +200,8 @@ identifier. The expression returns tha value of the variable, or an error if the
 > foo  //20
 >```
 
-- `++` operator: increase by 1 the current variable's value
+- increase: `(++ <name>)`
+increase by 1 the current variable's value
 
 > Example
 > 
@@ -205,7 +212,9 @@ identifier. The expression returns tha value of the variable, or an error if the
 > (print i) //1 
 > ```
 
-- `--` operator: decrease by 1 the current variable's value
+- decrease: `(-- <name>)`
+
+decrease by 1 the current variable's value
 
 > Example
 >
@@ -216,10 +225,11 @@ identifier. The expression returns tha value of the variable, or an error if the
 > (print i) //4 
 >
 
-### Block expressions
+### Block expression
 
-The `begin` expression allows you to create a new block of expressions with its own scope.
-**In order to implement the new **block scope**, on block enter a new environment for the block is created.**
+`(begin <exp1> <exp2> ... <expn>)`
+
+The block expression allows you to group expressions and evaluate them in their own scope (block environment).
 
 > Example
 > 
@@ -235,50 +245,41 @@ The `begin` expression allows you to create a new block of expressions with its 
 > (print x)     //10
 > ```
 
-### Conditional expressions
+### Branch expressions
 
-The conditional expressions supported by EVA are the following:
+The branch expressions supported by EVA are the following:
 
-- `if` operator, with syntax
-
-`(if <condition> <consequent> <alternate>)`
+- if: `(if <condition> <consequent> <alternate>)`
 
 > Example
 > 
 > ```
 > (var x 10)
 > (if (x > 5) 
->   (begin
->     (set x 3)
->     x
->   )
->   (begin
->     (set x 14)
->     x 
->   )
+>   (set x 3)
+>   (set x 14)
 > )
+> x //14
 > ```
 
-- `switch`operator, with syntax
-
-`(switch (<case1> <block1>) (<case2> <block2>) ... (else <blockn>))`
+- switch: `(switch (<case1> <block1>) (<case2> <block2>) ... (else <blockn>))`
 
 > Example
 > 
 > ```
+> (var x 5)
 > (switch
 >   ((x > 5) (print "foo"))
 >   ((x = 5) (print "bar"))
 >   (else (print "end")
-> )
+> ) //"bar"
 > ```
 
-### Cycle expressions
+### Loop expressions
 
-The cycle expressions supported by EVA are the following:
+The loop expressions supported by EVA are the following:
 
-- `while` loop, with syntax
-`(while <condition> <block>)`
+- while: `(while <condition> <block>)`
 
 > Example
 > 
@@ -290,9 +291,7 @@ The cycle expressions supported by EVA are the following:
 > ))
 > ```
 
-- `for` loop, with syntax
-
-`(for <init> <condition> <modifier> <body>)`
+- for: `(for <init> <condition> <modifier> <body>)`
 
 > Example
 > 
@@ -305,20 +304,18 @@ The cycle expressions supported by EVA are the following:
 ### Function expressions
 
 In EVA all function are closures, meaning that all functions store a reference to the scope in which they were defined,
-and therefore they can access all the variable defined in that scope chain (static scope).
+and therefore they can access all the variable defined in that scope chain.
 
 The function expressions supported by EVA are the following:
 
-- Function declaration: is it possible to declare a function using the `def` expression with syntax
-`(def <name> <params> <body>)`
+- declaration: `(def <name> <params> <body>)`
 
 > Example
 > ```
 > (def sum (x y) (+ x y))
 > ```
 
-- Function call: is it possible to call a function by its name with syntax
-`(name <param1> <param2> ... <paramn>)`
+- call: `(name <param1> <param2> ... <paramn>)`
 
 > Example
 > 
@@ -326,8 +323,9 @@ The function expressions supported by EVA are the following:
 > (sum 1 2) //3
 > ```
 
-- Lambda function: it is possible to define an anonymous function using the `lambda` expression with syntax
-`(lambda <params> <body>)`
+- lambda: `(lambda <params> <body>)`
+
+define an anonymous function.
 
 > Example
 > ```
@@ -335,19 +333,82 @@ The function expressions supported by EVA are the following:
 > (sum 3 5) //8
 > ```
 
-- Immediately-Invoked Lambda Expression (IILE): it is possible to immediately invoked a lambda function with syntax
-`( (lambda <params> <body>) <param1> <param2> ... <paramn>)`
+- _Immediately-Invoked Lambda Expression (IILE)_: `((lambda <params> <body>) <param1> <param2> ... <paramn>)`
+
+define and immediately invoke an anonymous function.
 
 > Example
 > ```
 > ((lambda (x y) (+ x y)) 3 7) //10
 > ```
 
+### Class expressions
+
+In EVA classes are named environments that can be instantiated. A class instance (object) is a new environment which 
+has the class environment as parent.
+
+A class can inherit from another class: in this case, the child class store a reference to the parent class environment.
+
+The class expressions supported by EVA are the following:
+
+- definition: `(class <name> <parent> <body>)`
+- property set: `(set (prop <instance> <name>) <value>)`
+- property read: `(prop <instance> <name>)`
+- instantiation: `(new <name> <params>)`
+- access to parent's class environment: `(super <childName>)`
+
+> Example
+> ```
+> (class Point3D Point
+>   (begin
+>     (def constructor (this x y z)
+>       (begin
+>         ((prop (super Point3D) constructor) this x y)
+>         (set (prop this z) z)  
+>       )
+>     )
+>     (def calc (this)
+>       (begin
+>         (+ ((prop (super Point3D) calc) this) (prop this z))
+>       )
+>     ) 
+>   )
+> )
+> (var p3d (new Point3D 1 2 3))
+> ((prop p3d calc) p3d) //6
+> ```
+
+### Module expressions
+In EVA modules are named environment which can be defined in dedicated files and imported into the global environment. 
+
+The module expressions supported by EVA are the following:
+
+- definition: `(module <name> <body>)`
+- import: `(import <name>)`
+
+> Example
+> 
+> ```
+> //file Math.eva
+> (module Math
+>   (begin
+>     (def square (x)
+>       (* x x)
+>     )
+>     (var MAX_VALUE 10000) 
+>   )
+> )
+> 
+> //main file
+> (import Math)
+> ((prop Math square) 2) //4
+> ```
+
 ## Environments
 
 An environment is a storage structure used to implement scopes, which acts as a repository of all variables and
-functions defined in a scope. Every programming language has at least a global environment, an environment
-which exists prior to code execution and contains some global declarations.
+functions defined in a scope. Every programming language has at least a global environment, which exists prior to code
+execution and contains some global declarations.
 
 Typically, the environment structure consists of two parts:
 - **Environment Record**: it's the actual storage, usually just a key/value map from variable name to its value.
