@@ -23,7 +23,6 @@ test("string expressions return the string without surrounding double quotes as 
 });
 
 //-------------------
-
 //block expressions:
 test('block expressions are correctly executed', () => {
   expect(_interpret(`
@@ -64,7 +63,6 @@ test('block environment has access to parent environment', () => {
 });
 
 //-------------------
-
 //math expressions:
 
 test("sum expression returns the sum of the operands as value", () => {
@@ -120,7 +118,6 @@ test('module expression returns the reminder of the division between the operand
 });
 
 //-------------------
-
 //comparison expressions:
 
 test('comparison expressions return a boolean', () => {
@@ -142,7 +139,6 @@ test('comparison expressions return a boolean', () => {
 });
 
 //-------------------
-
 //variable expressions:
 
 test('variable declaration expression returns the assigned value', () => {
@@ -210,7 +206,6 @@ test('decrement expression decrease variable value by 1', () => {
 });
 
 //-------------------
-
 //conditional expressions:
 
 test('if expression executes consequent if condition is true', () => {
@@ -233,7 +228,6 @@ test('switch expression executes the right case if condition is met', () => {
   `)).toBe(200)
 })
 //-------------------
-
 //cycle expressions:
 
 test('while loop returns the result of its last iteration', () => {
@@ -358,7 +352,7 @@ test ('functions can be called recursively', () => {
   `)).toBe(120)
 })
 //-------------------
-// class expressions
+//class expressions
 test('classes create a new environment at declaration', () => {
   expect(_interpret(`
     (begin 
@@ -424,3 +418,38 @@ test('classes can inherit from super classes', () => {
   `)).toBe(6);
 });
 //-------------------
+//module expressions
+test('function and variables defined in modules can be accessed', () => {
+  expect(_interpret(`
+    (begin
+      (module Math
+        (begin
+          (def abs (value)
+            (if (< value 0)
+              (- value)
+              (value)
+            )
+          )
+          (def square (x)
+            (* x x)
+          )
+          (var MAX_VALUE 1000)
+        )
+      )
+      (var abs (prop Math abs))
+      (var maxValue (prop Math MAX_VALUE))
+      (abs (- maxValue))
+    )
+  `)).toBe(1000);
+});
+
+test('modules can be imported', () => {
+  expect(_interpret(`
+    (begin
+        (import Math)
+        (var abs (prop Math abs))
+        (var maxValue (prop Math MAX_VALUE))
+        (abs (- maxValue))
+      )
+  `)).toBe(1000)
+});

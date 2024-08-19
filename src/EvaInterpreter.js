@@ -1,6 +1,8 @@
 const Environment = require("./Environment");
 const ExecutionStack = require("./ExecutionStack");
 const Transformer = require('./transformer/Transformer');
+const evaParser = require('./parser/evaParser');
+const fs = require('fs');
 
 //default global environment
 const GLOBAL_ENV = new Environment({
@@ -172,6 +174,7 @@ module.exports = class EvaInterpreter {
       return this.eval(whileExp, env);
     }
 
+    //--------------------------
     //class expressions:
 
     //declaration (class <name> <parent> <body>)
@@ -220,7 +223,36 @@ module.exports = class EvaInterpreter {
     }
 
     //--------------------------
+    //module expressions:
 
+    //definition (module <name> <body>)
+    //todo add exports to define the module api and hide implementation logics
+    if (exp[0] === 'module') {
+      const [_tag, name, body] = exp;
+      const moduleEnv = new Environment({}, env);
+
+      this._evalBody(body, moduleEnv);
+
+      return env.define(name, moduleEnv);
+    }
+
+    //import (import <name>)
+    //todo add partial import (import <partials> <name>)
+    if (exp[0] === 'import') {
+      const [_tag, moduleName] = exp;
+
+      const moduleSrc = fs.readFileSync(
+        `${__dirname}/modules/${moduleName}.eva`,
+        'utf-8'
+      );
+
+      const body = evaParser.parse(`(begin ${moduleSrc})`);
+
+      const moduleExp = ['module', moduleName, body];
+
+      return this.eval(moduleExp, this._globalEnv);
+    }
+    //--------------------------
     //function expressions:
 
     /**
